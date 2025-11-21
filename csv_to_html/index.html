@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to HTML Converter</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js"></script>
+<!-- Privacy-friendly analytics by Plausible -->
+<script async src="https://plausible.io/js/pa-rWL67ZugjQ4I9jTUELQPw.js"></script>
+<script>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+</script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>CSV to HTML Converter</h1>
+
+        <section class="converter-input">
+            <h2>1. Input CSV Text</h2>
+            <form data-csv-form>
+            <textarea data-csv-input id="csv-input" placeholder="Paste your CSV text here..." rows="10"></textarea>
+            <button type="submit" id="convert-button">Convert CSV</button>
+        </section>
+
+        <hr>
+
+        <section class="converter-output">
+            <h2>2. Generated HTML Table View</h2>
+            <div id="table-output" class="output-preview">
+                <p data-csv-output class="placeholder">Table will appear here after conversion.</p>
+            </div>
+        </section>
+
+        <hr>
+
+        <section class="converter-code">
+            <h2>3. HTML Table Code</h2>
+            <pre><code id="code-output" class="language-html">
+                <p data-csv-code class="placeholder">Raw HTML code will appear here.</p>
+            </code></pre>
+            <button id="copy-code-button">Copy HTML Code</button>
+        </section>
+    </div>
+
+</body>
+</html>
+
