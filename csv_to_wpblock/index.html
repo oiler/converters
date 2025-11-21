@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV to WordPress Block Table Converter</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js"></script>
+<!-- Privacy-friendly analytics by Plausible -->
+<script async src="https://plausible.io/js/pa-rWL67ZugjQ4I9jTUELQPw.js"></script>
+<script>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+</script>
+</head>
+<body>
+    <h1>CSV to WordPress Block Table Converter</h1>
+
+    <!-- Example 1: Basic conversion -->
+    <div class="example">
+        <h2>Example 1: Basic Table (No Header)</h2>
+        <div class="info">
+            Converts CSV to WordPress block table markup with <code>has-fixed-layout</code> class.
+        </div>
+
+        <form data-wp-form>
+            <label for="csv1">Enter CSV Data:</label>
+            <textarea id="csv1" data-wp-input placeholder="row1 col1,row1 col2&#10;row2 col1,row2 col2">row1 col1,row1 col2
+row2 col1,row2 col2</textarea>
+            <button type="submit">Convert to WordPress Block</button>
+        </form>
+
+        <div data-wp-output></div>
+        <div data-wp-preview></div>
+    </div>
+
+    <!-- Example 2: Table with header -->
+    <div class="example">
+        <h2>Example 2: Table with Header Row</h2>
+        <div class="info">
+            First row will be converted to <code>&lt;thead&gt;</code> with <code>&lt;th&gt;</code> elements.
+        </div>
+
+        <form id="header-form">
+            <label for="csv2">Enter CSV Data with Header:</label>
+            <textarea id="csv2" class="header-input">Name,Age,City
+John,30,New York
+Jane,25,Los Angeles
+Bob,35,Chicago</textarea>
+            <button type="submit">Convert to WordPress Block</button>
+        </form>
+
+        <div id="header-output"></div>
+        <div id="header-preview"></div>
+    </div>
+
+    <!-- Example 3: Table with options -->
+    <div class="example">
+        <h2>Example 3: Table with Custom Options</h2>
+        <div class="info">
+            Toggle options to customize the WordPress block output.
+        </div>
+
+        <form id="options-form">
+            <label for="csv3">Enter CSV Data:</label>
+            <textarea id="csv3" class="options-input">Product,Price,Stock
+Widget,29.99,In Stock
+Gadget,14.99,Low Stock
+Tool Set,49.99,Out of Stock</textarea>
+            
+            <div class="options">
+                <label>
+                    <input type="checkbox" id="opt-header" checked>
+                    Has Header Row
+                </label>
+                <label>
+                    <input type="checkbox" id="opt-fixed" checked>
+                    Fixed Layout
+                </label>
+                <label>
+                    <input type="checkbox" id="opt-stripes">
+                    Striped Rows
+                </label>
+            </div>
+
+            <button type="submit">Convert to WordPress Block</button>
+        </form>
+
+        <div id="options-output"></div>
+        <div id="options-preview"></div>
+    </div>
+
+    <!-- Example 4: Complex CSV -->
+    <div class="example">
+        <h2>Example 4: Complex CSV with Quoted Fields</h2>
+        <div class="info">
+            Handles quoted fields with embedded commas and special characters.
+        </div>
+
+        <form data-wp-form>
+            <label for="csv4">Enter CSV Data:</label>
+            <textarea id="csv4" data-wp-input>Item,Description,Notes
+"Widget, Large","Contains 3 parts: base, top, cover","Handle with care"
+"Gadget & Tool","Multi-purpose device","See manual for ""special"" instructions"
+Simple Item,No special chars,Regular notes</textarea>
+            <button type="submit">Convert to WordPress Block</button>
+        </form>
+
+        <div data-wp-output></div>
+        <div data-wp-preview></div>
+    </div>
+
+    <script>
+        // Example 2: Manual initialization with header option
+        window.WPBlockConverter.init({
+            formSelector: '#header-form',
+            inputSelector: '.header-input',
+            outputSelector: '#header-output',
+            previewSelector: '#header-preview',
+            tableOptions: {
+                hasHeader: true,
+                hasFixedLayout: true
+            }
+        });
+
+        // Example 3: Dynamic options handling
+        const optionsForm = document.getElementById('options-form');
+        const optHeaderCheckbox = document.getElementById('opt-header');
+        const optFixedCheckbox = document.getElementById('opt-fixed');
+        const optStripesCheckbox = document.getElementById('opt-stripes');
+
+        // Helper function for HTML escaping
+        const escapeHTML = (text) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+
+        // Helper function for formatting
+        const formatMarkup = (markup) => {
+            const tab = '  ';
+            let formatted = '';
+            let indent = 0;
+            
+            const parts = markup.split(/(<[^>]+>)/g).filter(part => part.trim());
+            
+            parts.forEach(part => {
+                if (!part.trim()) return;
+                
+                if (part.startsWith('<!--')) {
+                    formatted += part + '\n';
+                    return;
+                }
+                
+                if (part.match(/^<\/(figure|table|thead|tbody|tr)>/)) {
+                    indent = Math.max(0, indent - 1);
+                    formatted += tab.repeat(indent) + part;
+                    if (part.match(/^<\/(figure|table|thead|tbody)>/)) {
+                        formatted += '\n';
+                    }
+                    return;
+                }
+                
+                if (part.match(/^<(figure|table|thead|tbody|tr)[\s>]/)) {
+                    formatted += tab.repeat(indent) + part;
+                    indent++;
+                    if (part.match(/^<(figure|table|thead|tbody)[\s>]/)) {
+                        formatted += '\n';
+                    }
+                    return;
+                }
+                
+                formatted += part;
+            });
+            
+            return formatted.trim();
+        };
+
+        // Helper function for copy button
+        const copyToClipboard = async (button, text) => {
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (error) {
+                console.error('Failed to copy:', error);
+            }
+        };
+
+        optionsForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const tableOptions = {
+                hasHeader: optHeaderCheckbox.checked,
+                hasFixedLayout: optFixedCheckbox.checked,
+                hasStripes: optStripesCheckbox.checked
+            };
+            
+            // Manually trigger conversion with dynamic options
+            const csvText = document.querySelector('.options-input').value;
+            if (!csvText.trim()) {
+                document.querySelector('#options-output').innerHTML = '<p class="wp-error">Please enter CSV data</p>';
+                document.querySelector('#options-preview').innerHTML = '';
+                return;
+            }
+
+            try {
+                const parsedData = window.WPBlockConverter.parse(csvText);
+                const markup = window.WPBlockConverter.createMarkup(parsedData, tableOptions);
+                
+                if (markup) {
+                    const output = document.querySelector('#options-output');
+                    const preview = document.querySelector('#options-preview');
+                    
+                    // Create code output
+                    const codeContainer = document.createElement('div');
+                    codeContainer.className = 'wp-code-container';
+                    
+                    const copyButton = document.createElement('button');
+                    copyButton.type = 'button';
+                    copyButton.className = 'wp-copy-button';
+                    copyButton.textContent = 'Copy Block Code';
+                    copyButton.addEventListener('click', () => copyToClipboard(copyButton, markup));
+                    
+                    const pre = document.createElement('pre');
+                    const code = document.createElement('code');
+                    code.textContent = formatMarkup(markup);
+                    pre.appendChild(code);
+                    
+                    codeContainer.appendChild(copyButton);
+                    codeContainer.appendChild(pre);
+                    
+                    output.innerHTML = '';
+                    output.appendChild(codeContainer);
+
+                    // Create preview
+                    const previewContainer = document.createElement('div');
+                    previewContainer.className = 'wp-preview-container';
+                    
+                    const previewTitle = document.createElement('h3');
+                    previewTitle.className = 'wp-preview-title';
+                    previewTitle.textContent = 'Preview';
+                    
+                    const tableMatch = markup.match(/<figure[^>]*>(.*?)<\/figure>/s);
+                    if (tableMatch) {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = tableMatch[1];
+                        previewContainer.appendChild(previewTitle);
+                        previewContainer.appendChild(tempDiv);
+                    }
+                    
+                    preview.innerHTML = '';
+                    preview.appendChild(previewContainer);
+                } else {
+                    output.innerHTML = '<p class="wp-error">No valid data to display</p>';
+                    preview.innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Conversion error:', error);
+                document.querySelector('#options-output').innerHTML = '<p class="wp-error">Error processing CSV data</p>';
+                document.querySelector('#options-preview').innerHTML = '';
+            }
+        });
+    </script>
+</body>
+</html>
